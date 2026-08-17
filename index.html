@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your Life Time</title>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #fafafa;
+    --fg: #222;
+    --dot-past: #333;
+    --dot-future: #ccc;
+    --dot-now: #e5484d;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+      color-scheme: dark;
+      --bg: #17191d;
+      --fg: #c6cbd4;
+      --dot-past: #9099a8;
+      --dot-future: #3a3f47;
+      --dot-now: #ffb224;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #17191d;
+    --fg: #c6cbd4;
+    --dot-past: #9099a8;
+    --dot-future: #3a3f47;
+    --dot-now: #ffb224;
+  }
+  :root[data-theme="paper"] {
+    color-scheme: dark;
+    --bg: #1d1b17;
+    --fg: #cfc6b8;
+    --dot-past: #b3a68f;
+    --dot-future: #454038;
+    --dot-now: #ff6b35;
+  }
+  :root[data-theme="sepia"] {
+    color-scheme: light;
+    --bg: #f5efe2;
+    --fg: #3d3428;
+    --dot-past: #6b5d4a;
+    --dot-future: #d8cdb8;
+    --dot-now: #2f5fbf;
+  }
+  :root[data-theme="ocean"] {
+    color-scheme: dark;
+    --bg: #0f1b21;
+    --fg: #bcd3dc;
+    --dot-past: #6fa8bc;
+    --dot-future: #2a3f4a;
+    --dot-now: #ffb454;
+  }
+  :root[data-theme="sky"] {
+    color-scheme: light;
+    --bg: #eef4fa;
+    --fg: #253a4a;
+    --dot-past: #4a7ea8;
+    --dot-future: #d3e2ef;
+    --dot-now: #b45309;
+  }
+  :root[data-theme="forest"] {
+    color-scheme: dark;
+    --bg: #111a14;
+    --fg: #c2d2c5;
+    --dot-past: #8fac97;
+    --dot-future: #2c3a30;
+    --dot-now: #ffd166;
+  }
+  :root[data-theme="mint"] {
+    color-scheme: light;
+    --bg: #eef7f2;
+    --fg: #22423a;
+    --dot-past: #4a8a76;
+    --dot-future: #cfe5da;
+    --dot-now: #5b5bd6;
+  }
+  :root[data-theme="midnight"] {
+    color-scheme: dark;
+    --bg: #16121f;
+    --fg: #c9c2dd;
+    --dot-past: #9284c4;
+    --dot-future: #332c47;
+    --dot-now: #4ade80;
+  }
+  :root[data-theme="sakura"] {
+    color-scheme: light;
+    --bg: #fdf3f4;
+    --fg: #45323a;
+    --dot-past: #a06478;
+    --dot-future: #ecd5db;
+    --dot-now: #0f766e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: system-ui, sans-serif;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    gap: 12px;
+  }
+  form[hidden] { display: none; }
+  form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px 12px;
+    font-size: 14px;
+  }
+  form input, form select, form button {
+    font: inherit;
+    background: var(--bg);
+    color: var(--fg);
+    border: 1px solid var(--dot-future);
+  }
+  form input { padding: 2px 6px; }
+  form input[type="number"] { width: 5em; }
+  form select { padding: 2px 4px; }
+  form button { padding: 2px 10px; }
+  form a { color: inherit; opacity: 0.65; }
+  #err { color: var(--dot-now); font-size: 14px; text-align: center; }
+  #stage {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  #grid { display: block; }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="grid"></canvas></div>
+<form id="form">
+  <label><span data-t="birthday">Birthday</span> <input type="date" id="birthday" required></label>
+  <label><span data-t="expectancy">Life expectancy</span> <input type="number" id="expectancy" min="1" max="100" value="80" required></label>
+  <label><span data-t="theme">Theme</span> <select id="theme">
+    <option value="auto" data-t="theme-auto">Auto</option>
+    <option value="dark" data-t="theme-dark">Dark</option>
+    <option value="light" data-t="theme-light">Light</option>
+    <option value="paper" data-t="theme-paper" selected>Paper</option>
+    <option value="sepia" data-t="theme-sepia">Sepia</option>
+    <option value="ocean" data-t="theme-ocean">Ocean</option>
+    <option value="sky" data-t="theme-sky">Sky</option>
+    <option value="forest" data-t="theme-forest">Forest</option>
+    <option value="mint" data-t="theme-mint">Mint</option>
+    <option value="midnight" data-t="theme-midnight">Midnight</option>
+    <option value="sakura" data-t="theme-sakura">Sakura</option>
+  </select></label>
+  <label><span data-t="shape">Shape</span> <select id="shape">
+    <option value="dot" data-t="shape-dot" selected>Dot</option>
+    <option value="square" data-t="shape-square">Square</option>
+  </select></label>
+  <button type="button" id="download" data-t="download">Download</button>
+  <a href="https://waitbutwhy.com/2014/05/life-weeks.html" target="_blank" rel="noopener" data-t="inspired">Inspired by Wait But Why</a>
+</form>
+<p id="err" hidden></p>
+<script>
+'use strict';
+
+const WEEKS = 52;
+const THEMES = ['auto', 'dark', 'light', 'paper', 'sepia', 'ocean', 'sky', 'forest', 'mint', 'midnight', 'sakura'];
+const SHAPES = ['dot', 'square'];
+// Groups of 13 weeks (4 quarters): add group spacing after these weeks (none after the last group)
+const GROUP_ENDS = new Set([13, 26, 39]);
+
+// Bilingual: English by default, switch when browser language is Chinese;
+// validate() returns message codes, looked up at display time
+const MSG = {
+  en: {
+    'birthday': 'Birthday', 'expectancy': 'Life expectancy', 'theme': 'Theme',
+    'theme-auto': 'Auto', 'theme-dark': 'Dark', 'theme-light': 'Light',
+    'theme-paper': 'Paper', 'theme-sepia': 'Sepia', 'theme-ocean': 'Ocean',
+    'theme-sky': 'Sky', 'theme-forest': 'Forest', 'theme-mint': 'Mint',
+    'theme-midnight': 'Midnight', 'theme-sakura': 'Sakura',
+    'shape': 'Shape', 'shape-dot': 'Dot', 'shape-square': 'Square',
+    'download': 'Download',
+    'inspired': 'Inspired by Wait But Why',
+    'err-birthday': 'Please enter your birthday',
+    'err-future': 'Birthday cannot be in the future',
+    'err-expectancy': 'Life expectancy must be an integer between 1 and 100',
+  },
+  zh: {
+    'birthday': '生日', 'expectancy': '預期歲數', 'theme': '主題',
+    'theme-auto': '自動', 'theme-dark': '深色', 'theme-light': '淺色',
+    'theme-paper': '紙墨', 'theme-sepia': '羊皮紙', 'theme-ocean': '深海',
+    'theme-sky': '天空', 'theme-forest': '森林', 'theme-mint': '薄荷',
+    'theme-midnight': '午夜', 'theme-sakura': '櫻花',
+    'shape': '形狀', 'shape-dot': '圓點', 'shape-square': '方塊',
+    'download': '下載圖片',
+    'inspired': '靈感來源：Wait But Why',
+    'err-birthday': '請輸入生日',
+    'err-future': '生日不可在未來',
+    'err-expectancy': '預期歲數需為 1 到 100 的整數',
+  },
+};
+
+// Pure computation: returns { age, weekInYear }; today/birth are {y, m, d} (m is 1-based)
+function lifeProgress(birth, today) {
+  const utc = (o) => Date.UTC(o.y, o.m - 1, o.d);
+  // This year's birthday (Feb 29 rolls over to Mar 1 in non-leap years via Date)
+  let last = new Date(Date.UTC(today.y, birth.m - 1, birth.d));
+  if (last.getTime() > utc(today)) {
+    last = new Date(Date.UTC(today.y - 1, birth.m - 1, birth.d));
+  }
+  const age = last.getUTCFullYear() - birth.y;
+  const days = Math.round((utc(today) - last.getTime()) / 86400000);
+  return { age, weekInYear: Math.min(WEEKS - 1, Math.floor(days / 7)) };
+}
+
+function validate(birthdayStr, expectancyStr, today) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(birthdayStr || '');
+  if (!m) return { error: 'err-birthday' };
+  const birth = { y: +m[1], m: +m[2], d: +m[3] };
+  if (Date.UTC(birth.y, birth.m - 1, birth.d) > Date.UTC(today.y, today.m - 1, today.d)) {
+    return { error: 'err-future' };
+  }
+  const years = Number(expectancyStr);
+  if (!Number.isInteger(years) || years < 1 || years > 100) {
+    return { error: 'err-expectancy' };
+  }
+  return { birth, years };
+}
+
+if (typeof document !== 'undefined') {
+  const form = document.getElementById('form');
+  const birthdayInput = document.getElementById('birthday');
+  const expectancyInput = document.getElementById('expectancy');
+  const themeSelect = document.getElementById('theme');
+  const shapeSelect = document.getElementById('shape');
+  const err = document.getElementById('err');
+  const stage = document.getElementById('stage');
+  const canvas = document.getElementById('grid');
+  let cur = null; // { age, week, years } of the last successful render
+  let drawNow = null; // repaints the current-week halo at the given alpha; set by draw()
+
+  const params = new URLSearchParams(location.search);
+  // URL param lang=en|zh forces the language, otherwise follow the browser
+  const qLang = params.get('lang');
+  const LANG = qLang === 'en' || qLang === 'zh'
+    ? qLang
+    : (/^zh/i.test(navigator.language) ? 'zh' : 'en');
+  if (LANG === 'zh') {
+    document.documentElement.lang = 'zh-Hant-TW';
+    document.querySelectorAll('[data-t]').forEach((el) => {
+      el.textContent = MSG.zh[el.dataset.t];
+    });
+  }
+
+  function todayLocal() {
+    const t = new Date();
+    return { y: t.getFullYear(), m: t.getMonth() + 1, d: t.getDate() };
+  }
+
+  function render(birth, years) {
+    const { age, weekInYear } = lifeProgress(birth, todayLocal());
+    cur = { age, week: weekInYear, years };
+    draw();
+  }
+
+  // Canvas render in device pixels: dot size = min(fit by width, fit by height),
+  // all sizes snapped to integer device px so spacing is even with minimal leftover space
+  function draw() {
+    drawNow = null;
+    if (!cur) return;
+    const rows = cur.years;
+    const dpr = window.devicePixelRatio || 1;
+    const availW = Math.floor(stage.clientWidth * dpr);
+    const availH = Math.floor(stage.clientHeight * dpr);
+    const size = (d) => {
+      const gap = Math.max(1, Math.round(d * 0.35));
+      const group = Math.max(1, Math.round(d * 0.8));
+      const band = Math.round(d * 0.9);
+      const pad = Math.max(1, Math.round(d * 0.2)); // room for the current-week halo
+      return {
+        gap, group, band, pad,
+        w: WEEKS * d + (WEEKS - 1) * gap + GROUP_ENDS.size * group + pad * 2,
+        h: rows * d + (rows - 1) * gap + Math.floor((rows - 1) / 5) * band + pad * 2,
+      };
+    };
+    const wUnits = WEEKS + (WEEKS - 1) * 0.35 + GROUP_ENDS.size * 0.8 + 0.4;
+    const hUnits = rows + (rows - 1) * 0.35 + Math.floor((rows - 1) / 5) * 0.9 + 0.4;
+    let d = Math.max(1, Math.floor(Math.min(availW / wUnits, availH / hUnits)));
+    let s = size(d);
+    // Rounded-up gaps can overflow the stage; shrink until it fits
+    while (d > 1 && (s.w > availW || s.h > availH)) s = size(--d);
+
+    canvas.width = s.w;
+    canvas.height = s.h;
+    canvas.style.width = (s.w / dpr) + 'px';
+    canvas.style.height = (s.h / dpr) + 'px';
+
+    const style = getComputedStyle(document.documentElement);
+    const color = (name) => style.getPropertyValue(name).trim();
+    const square = document.documentElement.dataset.shape === 'square';
+    const bw = Math.max(1, Math.round(d * 0.12)); // hollow-dot border width
+    const ctx = canvas.getContext('2d');
+    // Opaque background so downloaded PNGs are not transparent
+    ctx.fillStyle = color('--bg');
+    ctx.fillRect(0, 0, s.w, s.h);
+    // One week mark at (x, y) with side length `sz`; stroke insets by half the border
+    const mark = (x, y, sz, stroke) => {
+      ctx.beginPath();
+      if (square) {
+        const i = stroke ? bw / 2 : 0;
+        if (ctx.roundRect) ctx.roundRect(x + i, y + i, sz - i * 2, sz - i * 2, sz * 0.15);
+        else ctx.rect(x + i, y + i, sz - i * 2, sz - i * 2);
+      } else {
+        ctx.arc(x + sz / 2, y + sz / 2, sz / 2 - (stroke ? bw / 2 : 0), 0, Math.PI * 2);
+      }
+      if (stroke) { ctx.lineWidth = bw; ctx.stroke(); } else ctx.fill();
+    };
+
+    let y = s.pad;
+    for (let r = 0; r < rows; r++) {
+      if (r > 0 && r % 5 === 0) y += s.band;
+      let x = s.pad;
+      for (let w = 0; w < WEEKS; w++) {
+        if (r === cur.age && w === cur.week) {
+          const cx = x, cy = y;
+          drawNow = (p) => { // p in [0, 1]: pulse phase, 0 = dimmest, 1 = brightest
+            ctx.fillStyle = color('--bg');
+            ctx.fillRect(cx - s.pad, cy - s.pad, d + s.pad * 2, d + s.pad * 2);
+            ctx.fillStyle = color('--dot-now');
+            ctx.globalAlpha = 0.12 + 0.48 * p; // translucent halo around the current week
+            mark(cx - s.pad, cy - s.pad, d + s.pad * 2, false);
+            ctx.globalAlpha = 0.8 + 0.2 * p; // dot itself dims and brightens with the pulse
+            mark(cx, cy, d, false);
+            ctx.globalAlpha = 1;
+          };
+          drawNow(0.5);
+        } else if (r < cur.age || (r === cur.age && w < cur.week)) {
+          ctx.fillStyle = color('--dot-past');
+          mark(x, y, d, false);
+        } else {
+          ctx.strokeStyle = color('--dot-future');
+          mark(x, y, d, true);
+        }
+        x += d + s.gap + (GROUP_ENDS.has(w + 1) ? s.group : 0);
+      }
+      y += d + s.gap;
+    }
+  }
+
+  // Breathing-LED pulse: halo alpha follows a ~3s cosine wave; only the halo box repaints
+  requestAnimationFrame(function breathe(t) {
+    if (drawNow) drawNow(0.5 - 0.5 * Math.cos(t / 500));
+    requestAnimationFrame(breathe);
+  });
+
+  function apply(birthdayStr, expectancyStr, syncUrl, showError) {
+    const result = validate(birthdayStr, expectancyStr, todayLocal());
+    if (result.error) {
+      if (!showError) return; // mid-typing invalid value: keep the last render
+      err.textContent = MSG[LANG][result.error];
+      err.hidden = false;
+      cur = null;
+      canvas.width = canvas.height = 0;
+      canvas.style.width = canvas.style.height = '0';
+      return;
+    }
+    err.hidden = true;
+    if (syncUrl) {
+      const params = new URLSearchParams(location.search);
+      params.set('birthday', birthdayStr);
+      params.set('expectancy', expectancyStr);
+      history.replaceState(null, '', '?' + params);
+    }
+    render(result.birth, result.years);
+  }
+
+  function applyTheme(t) {
+    if (t === 'auto') delete document.documentElement.dataset.theme;
+    else document.documentElement.dataset.theme = t;
+  }
+
+  function applyShape(s) {
+    if (s === 'dot') delete document.documentElement.dataset.shape;
+    else document.documentElement.dataset.shape = s;
+  }
+
+  shapeSelect.addEventListener('change', () => {
+    const s = shapeSelect.value;
+    applyShape(s);
+    draw();
+    const params = new URLSearchParams(location.search);
+    if (s === 'dot') params.delete('shape');
+    else params.set('shape', s);
+    history.replaceState(null, '', params.size ? '?' + params : location.pathname);
+  });
+
+  themeSelect.addEventListener('change', () => {
+    const t = themeSelect.value;
+    applyTheme(t);
+    draw();
+    const params = new URLSearchParams(location.search);
+    if (t === 'paper') params.delete('theme');
+    else params.set('theme', t);
+    history.replaceState(null, '', params.size ? '?' + params : location.pathname);
+  });
+
+  form.addEventListener('submit', (e) => e.preventDefault());
+
+  // Live update: while typing, invalid values keep the last render silently;
+  // on change (blur / picker commit) an invalid value shows the error
+  const liveApply = (showError) => () =>
+    apply(birthdayInput.value, expectancyInput.value, true, showError);
+  birthdayInput.addEventListener('input', liveApply(false));
+  expectancyInput.addEventListener('input', liveApply(false));
+  birthdayInput.addEventListener('change', liveApply(true));
+  expectancyInput.addEventListener('change', liveApply(true));
+
+  document.getElementById('download').addEventListener('click', () => {
+    if (!cur) return;
+    if (drawNow) drawNow(0.5); // freeze the pulse at mid-phase for the export
+    // Compose onto a larger canvas so the exported PNG has a margin
+    const m = Math.round(canvas.width * 0.04);
+    const out = document.createElement('canvas');
+    out.width = canvas.width + m * 2;
+    out.height = canvas.height + m * 2;
+    const ctx = out.getContext('2d');
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+    ctx.fillRect(0, 0, out.width, out.height);
+    ctx.drawImage(canvas, m, m);
+    out.toBlob((blob) => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      const t = todayLocal();
+      const pad2 = (n) => String(n).padStart(2, '0');
+      a.download = `life-in-weeks-${t.y}-${pad2(t.m)}-${pad2(t.d)}.png`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+  });
+
+  window.addEventListener('resize', draw);
+
+  const theme = THEMES.includes(params.get('theme')) ? params.get('theme') : 'paper';
+  themeSelect.value = theme;
+  applyTheme(theme);
+  const shape = SHAPES.includes(params.get('shape')) ? params.get('shape') : 'dot';
+  shapeSelect.value = shape;
+  applyShape(shape);
+  // Without params: render with defaults and show the form; with both params: hide the form,
+  // clicking/touching anywhere toggles it
+  birthdayInput.value = params.get('birthday') || '2000-01-01';
+  if (params.has('expectancy')) expectancyInput.value = params.get('expectancy');
+  apply(birthdayInput.value, expectancyInput.value, false, true);
+  form.hidden = params.has('birthday') && params.has('expectancy') && err.hidden;
+  draw();
+
+  document.addEventListener('click', (e) => {
+    if (form.contains(e.target)) return;
+    form.hidden = !form.hidden;
+    draw();
+  });
+}
+</script>
+</body>
+</html>
